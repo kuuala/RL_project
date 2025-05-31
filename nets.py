@@ -11,9 +11,9 @@ class DQN_Net(nn.Module):
         self.model = nn.Sequential(
             nn.Linear(n_observations, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size // 2),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size // 2, n_actions)
+            nn.Linear(hidden_size, n_actions)
         )
 
     def forward(self, x):
@@ -25,7 +25,8 @@ class DuelingDQN_Net(nn.Module):
         super().__init__()
         self.feature = nn.Sequential(
             nn.Linear(n_observations, hidden_size),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.LayerNorm(hidden_size)
         )
         self.value_stream = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
@@ -46,7 +47,7 @@ class DuelingDQN_Net(nn.Module):
 
 
 class NoisyLinear(nn.Module):
-    def __init__(self, in_features, out_features, std_init=0.4):
+    def __init__(self, in_features, out_features, std_init=0.1):
         super().__init__()
 
         self.in_features = in_features
@@ -95,12 +96,12 @@ class NoisyLinear(nn.Module):
 
 
 class NoisyDQN_Net(nn.Module):
-    def __init__(self, n_observations, n_actions, hidden_size):
+    def __init__(self, n_observations, n_actions, hidden_size, std_init):
         super(NoisyDQN_Net, self).__init__()
 
         self.linear = nn.Linear(n_observations, hidden_size)
-        self.noisy1 = NoisyLinear(hidden_size, hidden_size)
-        self.noisy2 = NoisyLinear(hidden_size, n_actions)
+        self.noisy1 = NoisyLinear(hidden_size, hidden_size, std_init)
+        self.noisy2 = NoisyLinear(hidden_size, n_actions, std_init)
 
     def forward(self, x):
         x = F.relu(self.linear(x))
